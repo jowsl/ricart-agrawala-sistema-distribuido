@@ -28,10 +28,12 @@ print(f"Alvo Local: 127.0.0.1:{PORTA_LOCAL_SYNC}")
 print(f"Alvo Remoto (Recurso): {IP_RECURSO}:{PORTA_RECURSO}")
 print("---------------------------------")
 
-for i in range(10): 
+aleatorio = random.randint(10, 50)
+
+for i in range(aleatorio): 
     #Simula pensamento
     tempo_espera = random.randint(1, 5)
-    print(f"\n[Tentativa {i+1}/10] Aguardando {tempo_espera}s.")
+    print(f"\n[Tentativa {i+1}/{aleatorio}] Aguardando {tempo_espera}s.")
     time.sleep(tempo_espera)
 
     print(f"[ACQUIRE] Solicitando acesso ao Nó {meu_id}")
