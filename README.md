@@ -1,7 +1,7 @@
 # Exclusão Mútua Distribuída (Ricart-Agrawala)
 
-Trabalho da disciplina de Sistemas Distribuídos - UFOP
-Professor: Joubert de Castro Lima 
+Trabalho da disciplina de Sistemas Distribuídos - UFOP\
+Professor: Joubert de Castro Lima \
 Alunos: Jouberth Matheus, Cauã Guenrik, Enzo Bernardes
 
 Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks.
