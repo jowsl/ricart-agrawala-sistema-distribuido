@@ -3,7 +3,7 @@ import threading
 import time
 import json
 import sys
-from configuracoes import NOS
+from configuracoes import NOS, RECURSO_HOST, RECURSO_PORT
 
 #id do nó
 if len(sys.argv) < 2:
@@ -102,9 +102,9 @@ def ouvir_cliente():
                 cmd = conn.recv(1024).decode()
                 
                 #Cliente manda "ACQUIRE" -- "Quero acessar"
-                if "ACQUIRE" in cmd:
+                if cmd.startswith("ESCRITA|"):
                     print("\n> Cliente pediu acesso! Iniciando protocolo")
-                    
+                    mensagem_para_salvar = cmd.split("|")[1]
                     with lock: # garante que so ouvir_client esteja alterandoa gora
                         estado = "QUERENDO"
                         relogio_lamport += 1
@@ -127,11 +127,21 @@ def ouvir_cliente():
                     with lock: estado = "OCUPADO"
                     print(">>> CONSEGUI ACESSO! (Todos OKs recebidos)")
                     
-                    # avisa o cliente que ele por acessar o recurso.
-                    conn.sendall(b"COMMITTED")
+                    #agora o cluster_sync funciona como proxy relacionando o recurso ao cliente
+                    try:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s_rec:
+                            s_rec.settimeout(3)
+                            #connecta no DNS do dockker
+                            s_rec.connect((RECURSO_HOST, RECURSO_PORT))
+                            s_rec.sendall(mensagem_para_salvar.encode())
+                        conn.sendall(b"COMMITTED")
+
+                    except Exception as e:                    
+                        print(f"[ERRO] Falha ao conectar no Recurso central: {e}")
+                        conn.sendall(b"ERROR_RESOURCE_OFFLINE")
                     
-                    #sleep por 3 segundos so por segurança, enquanto cliente escreve no recurso.txt
-                    time.sleep(3) 
+                    time.sleep(1)
+                    
                     
                     #fim da seção crítica
                     print("<<< LIBERANDO RECURSO >>>")
@@ -151,12 +161,10 @@ def ouvir_cliente():
 # main
 def iniciar():
     
-    # t_rede = threading.Thread(target=ouvir_cliente, daemon=True) 
-    
-    #thread para ouvir os outros cluster_sync
+    #fica ouvindo o cliente, chama o tratar_rede em outra Thread
     threading.Thread(target=ouvir_cliente, daemon=True).start()
     
-    #fica ouvindo o cliente, chama o tratar_rede em outra Thread
+    #thread para ouvir os outros cluster_sync
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('0.0.0.0', MINHA_PORTA_REDE))
         s.listen()

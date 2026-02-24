@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # O Servidor de Recurso
+  recurso:
+    build: .
+    container_name: recurso
+    # Sobrescrevemos o comando padrão para ele NÃO rodar o run.sh, e sim o recurso.py
+    entrypoint: ["python3", "recurso.py"]
+
+  # Nó 1
+  node1:
+    build: .
+    container_name: node1
+    command: ["1"] # Passa o ID 1 para o run.sh
+    depends_on:
+      - recurso
+
+  # Nó 2
+  node2:
+    build: .
+    container_name: node2
+    command: ["2"]
+    depends_on:
+      - recurso
+
+  # Nó 3
+  node3:
+    build: .
+    container_name: node3
+    command: ["3"]
+    depends_on:
+      - recurso
+
+  # Nó 4
+  node4:
+    build: .
+    container_name: node4
+    command: ["4"]
+    depends_on:
+      - recurso
+
+  # Nó 5
+  node5:
+    build: .
+    container_name: node5
+    command: ["5"]
+    depends_on:
+      - recurso

@@ -6,7 +6,7 @@ Alunos: Jouberth Matheus, Cauã Guenrik, Enzo Bernardes
 
 Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks.
 
-## Arquitetura
+## Arquitetura da versão 1.0
 
 ![Arquitetura do Sistema](Diagrama.png)
 
@@ -88,6 +88,38 @@ Para confirmar que o algoritmo funcionou corretamente:
 ├── configuracoes.py     # Lista de IPs e Portas
 └── README.md           # Este arquivo
 ```
+## Arquitetura da versão 2.0
+
+Utilizamos o Docker para facilitar a execução e simulação do cluster em múltiplas máquinas. Cada nó do cluster é representado por um container Docker, e a comunicação entre eles é feita através de uma rede Docker personalizada.
+
+```
+tp_sistemas/
+ ├── cliente.py
+ ├── cluster_sync.py
+ ├── configuracoes.py
+ ├── recurso.py
+ ├── run.sh              
+ ├── Dockerfile          
+ └── docker-compose.yml  
+```
+
+O run.sh é um script para facilitar a construção e execução dos containers, enquanto o Dockerfile define a imagem base e as dependências necessárias para rodar os scripts Python. O docker-compose.yml orquestra a criação dos containers e a configuração da rede entre eles.
+
+
+### Docker
+
+Para rodar tudo é so abrir o terminal na mesma pasta do projedo e executar o comando:
+
+```bash
+docker-compose up --build
+```
+
+Ele vai ligar o primeiro:
+
+- recurso.py
+- 5 nodes de cluster_sync.py
+- 5 nodes de cliente.py
+
 
 ## Sobre o Algoritmo de Ricart-Agrawala
 
