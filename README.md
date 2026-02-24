@@ -141,12 +141,5 @@ O algoritmo de Ricart-Agrawala é uma solução de exclusão mútua distribuída
 ## Requisitos
 
 - Python 3.7 ou superior
+- Docker e Docker Compose (para a versão 2.0)
 - Rede configurada entre os nós (se estiver usando múltiplas máquinas)
-
-## Licença
-
-Este projeto é para fins educacionais.
-
-## Referências
-
-- Ricart, G., & Agrawala, A. K. (1981). An optimal algorithm for mutual exclusion in computer networks. Communications of the ACM, 24(1), 9-17.
