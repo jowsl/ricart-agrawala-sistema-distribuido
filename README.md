@@ -90,7 +90,12 @@ Para confirmar que o algoritmo funcionou corretamente:
 ```
 ## Arquitetura da versão 2.0
 
-Utilizamos o Docker para facilitar a execução e simulação do cluster em múltiplas máquinas. Cada nó do cluster é representado por um container Docker, e a comunicação entre eles é feita através de uma rede Docker personalizada.
+A versão 2.0 tem algumas correções sugeridas pelo professor, e também tem a adição do Docker para facilitar a execução e simulação do cluster em múltiplas máquinas. 
+
+A principal correção foi manter deixar o acesso ao recurso sendo orquestrado pelo middleware (cluster_sync.py) e não mais pelo cliente, ou seja, o cliente só solicita acesso ao recurso, e o middleware é quem decide quando o cliente pode acessar o recurso, e é quem faz a escrita no arquivo.
+Na versão anterior o cliente acessava diretamente o recurso através do recurso.py.
+
+Sobe o Docker, cada nó do cluster é representado por um container Docker, e a comunicação entre eles é feita através de uma rede Docker personalizada.
 
 ```
 tp_sistemas/
