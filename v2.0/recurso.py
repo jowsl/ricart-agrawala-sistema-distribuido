@@ -24,7 +24,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             log_entry = f"[{timestamp}] {mensagem.strip()}"
             print(f"Escrevendo: {log_entry}")
             
-            # Escreve no disco
+            # Escreve no disco criando o RECURSO.txt
             with open("RECURSO.txt", "a") as f:
                 f.write(log_entry + "\n")
                 f.flush()

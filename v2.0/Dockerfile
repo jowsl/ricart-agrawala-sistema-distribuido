@@ -1,5 +1,8 @@
 FROM python:3.9-slim
 
+#desliga o pythonbuffer pra facilita visualização no terminal
+ENV PYTHONBUFFERED=1
+
 #define pasta default como a /app
 WORKDIR /app
 
