@@ -4,13 +4,13 @@ Trabalho da disciplina de Sistemas Distribuídos - UFOP\
 Professor: Joubert de Castro Lima \
 Alunos: Jouberth Matheus, Cauã Guenrik, Enzo Bernardes
 
-Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks.
+Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks. Esse trabalho foi dividido em 3 versões, onde a primeira usamos Virtual Machines na Oracle Cloud, e a segunda versão utilizamos o Docker para facilitar a simulação do cluster em múltiplas máquinas e terceira versão é a implementação aperfeiçoamos a versão 2.0 adicionando replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além de implementar um mecanismo de detecção de falhas para lidar com nós que possam ficar inativos durante
 
 ## Arquitetura da versão 1.0
 
 ![Arquitetura do Sistema](Diagrama.png)
 
-O sistema é composto por 3 arquivos pincipais, e utilizamos Virtual Machines na Oracle Cloud para simular um cluster.
+O sistema é composto por 3 arquivos pincipais, e utilizamos duas Free Virtual Machines na Oracle Cloud para simular um cluster.
 
 ### 1. Cliente (`cliente.py`)
 Solicita acesso ao recurso e, quando autorizado, realiza a escrita.
@@ -124,6 +124,13 @@ Ele vai ligar o primeiro:
 - recurso.py
 - 5 nodes de cluster_sync.py
 - 5 nodes de cliente.py
+
+## Arquitetura da versão 3.0
+
+A versão 3.0 é uma extensão da versão 2.0, onde adicionamos replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além de implementar um mecanismo de detecção de falhas para lidar com nós que possam ficar inativos durante a execução.
+
+
+
 
 
 ## Sobre o Algoritmo de Ricart-Agrawala
