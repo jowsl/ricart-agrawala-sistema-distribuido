@@ -1,49 +1,63 @@
-version: '3.8'
-
 services:
-  # O Servidor de Recurso
-  recurso:
+  # Cluster store 
+  store1:
     build: .
-    container_name: recurso
-    # Sobrescrevemos o comando padrão para ele NÃO rodar o run.sh, e sim o recurso.py
-    entrypoint: ["python3", "recurso.py"]
+    container_name: store1
+    entrypoint: ["python3", "-u", "cluster_store.py", "1"]
 
-  # Nó 1
+  store2:
+    build: .
+    container_name: store2
+    entrypoint: ["python3", "-u", "cluster_store.py", "2"]
+
+  store3:
+    build: .
+    container_name: store3
+    entrypoint: ["python3", "-u", "cluster_store.py", "3"]
+
+
+# Cluster sync + clientes
   node1:
     build: .
     container_name: node1
-    command: ["1"] # Passa o ID 1 para o run.sh
+    command: ["1"]
     depends_on:
-      - recurso
+      - store1
+      - store2
+      - store3
 
-  # Nó 2
   node2:
     build: .
     container_name: node2
     command: ["2"]
     depends_on:
-      - recurso
+      - store1
+      - store2
+      - store3
 
-  # Nó 3
   node3:
     build: .
     container_name: node3
     command: ["3"]
     depends_on:
-      - recurso
+      - store1
+      - store2
+      - store3
 
-  # Nó 4
   node4:
     build: .
     container_name: node4
     command: ["4"]
     depends_on:
-      - recurso
+      - store1
+      - store2
+      - store3
 
-  # Nó 5
   node5:
     build: .
     container_name: node5
     command: ["5"]
     depends_on:
-      - recurso
+      - store1
+      - store2
+      - store3

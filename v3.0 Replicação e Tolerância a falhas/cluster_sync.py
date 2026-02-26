@@ -9,7 +9,7 @@ from configuracoes import NOS, STORES
 #!Global
 #status dos stores, false = morto , true = vivo
 status_stores = {1: False, 2: False, 3: False}
-
+precisa_atualizar = False
 
 #id do nó
 if len(sys.argv) < 2:
@@ -92,6 +92,63 @@ def tratar_rede(conn):
     finally:
         conn.close()
 
+#função que vai fazer o update se tiver alguem desatualizado, deve ser chamada
+#dentro da seção crítica pra evitar as duplicações.
+def sincronizar_stores_desatualizados():
+    
+    versoes = {}
+
+    #vê as versões dos STORES vivos    
+    for store in STORES:
+        id_store = store['id']
+        if status_stores[id_store]:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(2)
+                    s.connect((store['host'], store['port']))
+                    s.sendall(b"GET_VERSAO")
+                    versao = int(s.recv(1024).decode())
+                    versoes[id_store] = versao
+            except Exception as e:
+                print(f"[SYNC] Erro ao buscar versão do Store {id_store}: {e}")
+                
+    if not versoes: 
+        print("[ERRO] Nenhum STORE vivo.")
+        return 0
+    
+    #verifica quem tem a maior versão
+    maior_versao = max(versoes.values())
+    id_fonte = max(versoes, key=versoes.get)
+    dados_fonte = next(s for s in STORES if s['id'] == id_fonte)
+    
+    #atualização dos que estão com versão mais antiga.
+    for id_alvo, versao_alvo in versoes.items():
+        if versao_alvo < maior_versao:
+            print(f">>> [UPDATE] Store {id_alvo} está na v{versao_alvo}. Fonte: Store {id_fonte} (v{maior_versao}).")
+            dados_alvo = next(s for s in STORES if s['id'] == id_alvo)
+            
+            try:
+                # pega linhas perdidas na fonte
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s_fonte:
+                    s_fonte.settimeout(2)
+                    s_fonte.connect((dados_fonte['host'], dados_fonte['port']))
+                    # cmd "GET_PERDIDAS|<ULTIMA_VERSÃO_DA_DESATUALIZADA>"
+                    s_fonte.sendall(f"GET_PERDIDAS|{versao_alvo}".encode())
+                    delta_perdido = s_fonte.recv(8192).decode() #cria um buffer maior por via das duvidas
+                
+                # aplica o buffer no alvo desatualizado.
+                if delta_perdido:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s_alvo:
+                        s_alvo.settimeout(2)
+                        s_alvo.connect((dados_alvo['host'], dados_alvo['port']))
+                        s_alvo.sendall(f"UPDATE|{delta_perdido}".encode())
+                        s_alvo.recv(1024) #espera OK
+                        
+                    print(f">>> [UPDATE] Store {id_alvo} atualizado com sucesso para v{maior_versao}!")
+                    
+            except Exception as e:
+                print(f">>> [UPDATE - ERRO] Falha ao sincronizar Store {id_alvo}: {e}")
+
 #CLIENTE
 def ouvir_cliente():
     global estado, ts_meu_pedido, ok_recebidos, relogio_lamport, fila_de_espera
@@ -132,19 +189,51 @@ def ouvir_cliente():
                     #entrou na seção crítica
                     with lock: estado = "OCUPADO"
                     print(">>> CONSEGUI ACESSO! (Todos OKs recebidos)")
-                    
-                    #agora o cluster_sync funciona como proxy relacionando o recurso ao cliente
-                    try:
-                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s_rec:
-                            s_rec.settimeout(3)
-                            #connecta no DNS do dockker
-                            s_rec.connect((RECURSO_HOST, RECURSO_PORT))
-                            s_rec.sendall(mensagem_para_salvar.encode())
-                        conn.sendall(b"COMMITTED")
 
-                    except Exception as e:                    
-                        print(f"[ERRO] Falha ao conectar no Recurso central: {e}")
-                        conn.sendall(b"ERROR_RESOURCE_OFFLINE")
+                    #verifica se precisa atualiza e chama se a flag for True
+                    global precisa_atualizar
+                    if precisa_atualizar:
+                        sincronizar_stores_desatualizados()
+                        precisa_atualizar = False #atualiza flag.
+
+                    votos_escrita = 0
+                    
+                    #fala com os stores que respoderam o hearthbeat
+                    for store in STORES:
+                        id_store = store['id']
+                        
+                        #tenta conectar se o ping diz que ele está vivo
+                        if status_stores[id_store]: 
+                            try:
+                                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s_rec:
+                                    s_rec.settimeout(2)
+                                    s_rec.connect((store['host'], store['port']))
+                                    
+                                    #empacota mensagem
+                                    comando = f"ESCRITA|{mensagem_para_salvar}"
+                                    s_rec.sendall(comando.encode())
+                                    
+                                    #espera response do store
+                                    resposta_store = s_rec.recv(1024).decode()
+                                    
+                                    # Se ele respondeu SUCESS (conforme você programou no cluster_store.py)
+                                    if "SUCESSO" in resposta_store:
+                                        votos_escrita += 1
+                                        print(f"    - Store {id_store} confirmou a gravação!")
+                                        
+                            except Exception as e:
+                                print(f"    [ERRO] Falha ao escrever no Store {id_store}: {e}")
+                        else:
+                            print(f"    - Pulando Store {id_store} (Marcado como Morto pelo Heartbeat)")
+                    
+                    #3 STORES. Precisamos de Nw = 2 votos para validar a escrita.
+                    if votos_escrita >= 2:
+                        print(f">>> SUCESSO! Escrita validada por Quórum ({votos_escrita}/3 votos).")
+                        conn.sendall(b"COMMITTED")
+                    else:
+                        print(f">>> [ALERTA] Quórum não alcançado. Tivemos apenas {votos_escrita} votos.")
+                        #cliente recebe erro e sabe que a escrita falhou
+                        conn.sendall(b"ERROR_QUORUM")
                     
                     time.sleep(1)
                     
@@ -166,7 +255,7 @@ def ouvir_cliente():
 
 def ping():
 
-    global status_stores
+    global status_stores, precisa_atualizar
     
     while True:
         for store in STORES:
@@ -180,7 +269,10 @@ def ping():
                     resposta = s.recv(1024).decode()
                     if resposta == "PONG":
                         if not status_stores[id_store]: # se tiver caido avisa que voltou
-                            print(f"[HEARTBEAT] Cluster Store {id_store} voltou a vida.")
+                            print(f"[HEARTBEAT] Cluster Store {id_store} voltou a vida. <<<<<<<<<<<")
+                            #atualiza a flag
+                            precisa_atualizar = True
+
                         status_stores[id_store] = True
                         
             except (ConnectionRefusedError, socket.timeout, socket.gaierror):

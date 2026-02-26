@@ -15,4 +15,3 @@ STORES = [
     {"id": 2, "host": "store2", "port": 8080},
     {"id": 3, "host": "store3", "port": 8080}
 ]
-RECURSO_PORT = 8080

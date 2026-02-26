@@ -46,8 +46,8 @@ def tratar_requisicoes(conn, addr):
                     with open(ARQ_RECURSO, "a") as f:
                         f.write(dado + "\n")
                     nova_versao = get_versao_atual()
-                print(f"[STORE {MEU_ID}] escrita concluida versão: {nova_versao} | {dado}")
-                conn.sendall(f"SUCESS|{nova_versao}".encode())
+                    print(f"[STORE {MEU_ID}] escrita concluida versão: {nova_versao} | {dado}")
+                    conn.sendall(f"SUCESSO|{nova_versao}".encode())
 
             #clustersync pede as linhas perdidas
             elif cmd.startswith("GET_PERDIDAS|"):
