@@ -269,7 +269,7 @@ def ping():
                     resposta = s.recv(1024).decode()
                     if resposta == "PONG":
                         if not status_stores[id_store]: # se tiver caido avisa que voltou
-                            print(f"[HEARTBEAT] Cluster Store {id_store} voltou a vida. <<<<<<<<<<<")
+                            print(f"\t[HEARTBEAT] Cluster Store {id_store} voltou a vida. <<<<<<<<<<<")
                             #atualiza a flag
                             precisa_atualizar = True
 
@@ -278,7 +278,7 @@ def ping():
             except (ConnectionRefusedError, socket.timeout, socket.gaierror):
                 #erro de conexão ou timeout, o servidor caiu
                 if status_stores[id_store]:
-                    print(f"[!!!] Cluster Store {id_store} caiu. <<<<<<<<<<<")
+                    print(f"\t[!!!] Cluster Store {id_store} caiu. <<<<<<<<<<<")
                 status_stores[id_store] = False
                 
         time.sleep(2) #2seg antes de varrer a rede de novo.

@@ -4,11 +4,20 @@ Trabalho da disciplina de Sistemas Distribuídos - UFOP\
 Professor: Joubert de Castro Lima \
 Alunos: Jouberth Matheus, Cauã Guenrik, Enzo Bernardes
 
-Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks. Esse trabalho foi dividido em 3 versões, onde a primeira usamos Virtual Machines na Oracle Cloud, e a segunda versão utilizamos o Docker para facilitar a simulação do cluster em múltiplas máquinas e terceira versão é a implementação aperfeiçoamos a versão 2.0 adicionando replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além de implementar um mecanismo de detecção de falhas para lidar com nós que possam ficar inativos durante
+Este projeto implementa um sistema de exclusão mútua distribuída utilizando o algoritmo de Ricart-Agrawala. O objetivo é coordenar o acesso de múltiplos processos concorrentes a um recurso compartilhado (escrita em arquivo) sem a necessidade de um servidor central de controle de locks. 
+
+Esse trabalho foi dividido em 3 versões:
+Esse trabalho foi dividido em 3 versões:
+
+- Versão 1.0: Uso de Free Virtual Machines na Oracle Cloud.
+
+- Versão 2.0: Utilização do Docker para facilitar a simulação do cluster em múltiplas máquinas e delegação do acesso ao Middleware.
+
+- Versão 3.0: Aperfeiçoamento adicionando replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além da implementação de um mecanismo de detecção e reparo de nós inativos.
 
 ## Arquitetura da versão 1.0
 
-![Arquitetura do Sistema](Diagrama.png)
+![Arquitetura do Sistema](Diagrama1.png)
 
 O sistema é composto por 3 arquivos pincipais, e utilizamos duas Free Virtual Machines na Oracle Cloud para simular um cluster.
 
@@ -81,7 +90,7 @@ Para confirmar que o algoritmo funcionou corretamente:
 ## Estrutura de Arquivos
 
 ```
-.
+v1.0 Nuvem/
 ├── cliente.py           # Aplicação final
 ├── cluster_sync.py      # Lógica do Ricart-Agrawala (Middleware)
 ├── recurso.py           # Servidor de arquivos central
@@ -98,7 +107,7 @@ Na versão anterior o cliente acessava diretamente o recurso através do recurso
 Sobe o Docker, cada nó do cluster é representado por um container Docker, e a comunicação entre eles é feita através de uma rede Docker personalizada.
 
 ```
-tp_sistemas/
+v2.0 Docker/
  ├── cliente.py
  ├── cluster_sync.py
  ├── configuracoes.py
@@ -122,15 +131,31 @@ docker-compose up --build
 Ele vai ligar o primeiro:
 
 - recurso.py
-- 5 nodes de cluster_sync.py
-- 5 nodes de cliente.py
+- 5 nodes de cluster_sync.py + cliente.py
 
 ## Arquitetura da versão 3.0
 
+```
+v3.0 Replicação e Tolerância a Falhas/
+ ├── cliente.py
+ ├── cluster_sync.py
+ ├── configuracoes.py
+ ├── cluster_store.py
+ ├── run.sh              
+ ├── Dockerfile          
+ └── docker-compose.yml  
+```
+
 A versão 3.0 é uma extensão da versão 2.0, onde adicionamos replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além de implementar um mecanismo de detecção de falhas para lidar com nós que possam ficar inativos durante a execução.
 
+Para atingir a tolerância a falhas, implementamos:
++ Protocolo de Votação (Quórum): Baseado no algoritmo de Thomas e Gifford, onde as escritas são replicadas. Definimos o quórum de escrita como Nw = 2. Isso significa que o sistema precisa da confirmação de gravação de pelo menos a maioria (2 de 3 nós) para validar a ação, evitando conflitos.
 
++ Heartbeat (Monitoramento Ativo): O Middleware envia mensagens periódicas de controle do tipo PING para o Cluster Store. Se um nó não responde, ele é marcado como inativo e o sistema roteia as requisições para os sobreviventes, mantendo a disponibilidade.
 
++ Sincronização Baseada no momento de escrita: Os nós do Cluster Store utilizam o total de linhas do arquivo como "Número de Versão". Quando um nó caído a rede fica sabendo através do PING, o Middleware detecta a diferença de versão e realiza um Update pegando os blocos, injetando apenas as linhas perdidas no nó desatualizado antes de processar novas requisições.
+
+![Arquitetura do Sistema](Diagrama3.png)
 
 
 ## Sobre o Algoritmo de Ricart-Agrawala
