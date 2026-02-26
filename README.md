@@ -135,16 +135,7 @@ Ele vai ligar o primeiro:
 
 ## Arquitetura da versão 3.0
 
-```
-v3.0 Replicação e Tolerância a Falhas/
- ├── cliente.py
- ├── cluster_sync.py
- ├── configuracoes.py
- ├── cluster_store.py
- ├── run.sh              
- ├── Dockerfile          
- └── docker-compose.yml  
-```
+![Arquitetura do Sistema](Diagrama3.png)
 
 A versão 3.0 é uma extensão da versão 2.0, onde adicionamos replicações do recurso para garantir maior disponibilidade e tolerância a falhas, além de implementar um mecanismo de detecção de falhas para lidar com nós que possam ficar inativos durante a execução.
 
@@ -155,7 +146,16 @@ Para atingir a tolerância a falhas, implementamos:
 
 + Sincronização Baseada no momento de escrita: Os nós do Cluster Store utilizam o total de linhas do arquivo como "Número de Versão". Quando um nó caído a rede fica sabendo através do PING, o Middleware detecta a diferença de versão e realiza um Update pegando os blocos, injetando apenas as linhas perdidas no nó desatualizado antes de processar novas requisições.
 
-![Arquitetura do Sistema](Diagrama3.png)
+```
+v3.0 Tolerância a Falhas/
+ ├── cliente.py
+ ├── cluster_sync.py
+ ├── configuracoes.py
+ ├── cluster_store.py
+ ├── run.sh              
+ ├── Dockerfile          
+ └── docker-compose.yml  
+```
 
 
 ## Sobre o Algoritmo de Ricart-Agrawala
